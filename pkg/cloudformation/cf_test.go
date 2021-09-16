@@ -8,8 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-
-
 func Test_getStacks(t *testing.T) {
 	type args struct {
 		client *cloudformation.Client

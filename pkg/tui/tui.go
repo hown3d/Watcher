@@ -11,10 +11,10 @@ import (
 )
 
 type model struct {
-	stacks []cf.Stack
-	cursor  int      // which to-do list item our cursor is pointing at
+	stacks        []cf.Stack
+	cursor        int // which to-do list item our cursor is pointing at
 	getStacksFunc func(*cloudformation.Client) ([]cf.Stack, error)
-	cfClient *cloudformation.Client
+	cfClient      *cloudformation.Client
 }
 
 type errMsg struct{ err error }
@@ -24,7 +24,7 @@ type stackMsg struct {
 }
 
 func (m model) updateStacks() tea.Cmd {
-	return tea.Tick(time.Second*time.Duration(10), func(t time.Time) tea.Msg {
+	return tea.Tick(time.Second*time.Duration(1), func(t time.Time) tea.Msg {
 		stacks, err := m.getStacksFunc(m.cfClient)
 		if err != nil {
 			return errMsg{err}
@@ -32,6 +32,7 @@ func (m model) updateStacks() tea.Cmd {
 		return stackMsg{stacks}
 	})
 }
+
 // InitialModel returns an inital bubbletea model with a cloudformation client pointing to awsEndpointURL
 func InitialModel(awsEndpointURL string) model {
 	var err error
@@ -39,19 +40,25 @@ func InitialModel(awsEndpointURL string) model {
 		// A map which indicates which choices are selected. We're using
 		// the  map like a mathematical set. The keys refer to the indexes
 		// of the `choices` slice, above.
-		cfClient: cf.NewClient(awsEndpointURL),
+		cfClient:      cf.NewClient(awsEndpointURL),
 		getStacksFunc: cf.GetStacks,
 	}
 	m.stacks, err = m.getStacksFunc(m.cfClient)
 	if err != nil {
 		log.Fatalf("Failed to get stacks: %v", err)
-	}	
+	}
 	return m
 }
 
 func (m model) Init() tea.Cmd {
 	// Just return `nil`, which means "no I/O right now, please."
-	return nil
+	return func() tea.Msg {
+		stacks, err := m.getStacksFunc(m.cfClient)
+		if err != nil {
+			return errMsg{err}
+		}
+		return stackMsg{stacks}
+	}
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -59,27 +66,33 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Is it a key press?
 	case tea.KeyMsg:
-
 		// Cool, what was the actual key pressed?
 		switch msg.String() {
-
-		// These keys should exit the program.
-		case "ctrl+c", "q":
-			return m, tea.Quit
-
-		// The "up" and "k" keys move the cursor up
-		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
-			}
-
-		// The "down" and "j" keys move the cursor down
-		case "down", "j":
-			if m.cursor < len(m.stacks)-1 {
-				m.cursor++
-			}
+			case "esc":
+				fallthrough
+			
+				// The "up" and "k" keys move the cursor up
+			case "up", "k":
+				if m.cursor > 0 {
+					m.cursor--
+				}
+				
+				// The "down" and "j" keys move the cursor down
+			case "down", "j":
+				if m.cursor < len(m.stacks)-1 {
+					m.cursor++
+				}
+			// These keys should exit the program.
+			case "ctrl+c", "q":
+				return m, tea.Quit
+			
 		}
+
+	case stackMsg:
+		m.stacks = msg.stacks
+		return m, m.updateStacks()
 	}
+	
 	// Return the updated model to the Bubble Tea runtime for processing.
 	// Note that we're not returning a command.
 	return m, nil

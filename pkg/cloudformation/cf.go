@@ -11,8 +11,9 @@ import (
 
 // Stack has a name, which resembles the cloudformation stack name and its status
 type Stack struct {
-	status string
-	name string
+	status       string
+	statusReason string
+	name         string
 }
 
 // NewClient returns a cloudformation Client, if url is not empty, a custom endpoint can be specified
@@ -22,7 +23,7 @@ func NewClient(url string) *cloudformation.Client {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if url != "" {	
+	if url != "" {
 		cfg.EndpointResolver = getCustomEndpointResolver(url, cfg.Region)
 	}
 	// Create an Amazon CF service client
@@ -46,13 +47,13 @@ func getCustomEndpointResolver(url string, region string) aws.EndpointResolverFu
 //GetStacks fetches all Cloudformation stacks from a client and returns them as a list
 func GetStacks(client *cloudformation.Client) ([]Stack, error) {
 	var stacks []Stack
+
 	output, err := client.DescribeStacks(context.TODO(), &cloudformation.DescribeStacksInput{})
 	if err != nil {
 		return nil, err
 	}
 	for _, stack := range output.Stacks {
-		stacks = append(stacks, Stack{name: *stack.StackName, status: *stack.StackStatusReason})
+		stacks = append(stacks, Stack{name: *stack.StackName, statusReason: *stack.StackStatusReason, status: string(stack.StackStatus)})
 	}
 	return stacks, nil
 }
-
