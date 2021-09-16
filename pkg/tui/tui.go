@@ -101,12 +101,16 @@ func newListKeyMap() *listKeyMap {
 
 // InitialModel returns an inital bubbletea model with a cloudformation client pointing to awsEndpointURL
 func InitialModel(cfClient *cloudformation.Client) model {
-	listKeys := newListKeyMap()
+	var (
+		listKeys = newListKeyMap()
+	)
 
 	stackList, err := getStackItemList(cfClient)
 	if err != nil {
 		log.Fatalf("Can't create stack list, %v", err)
 	}
+
+
 	stackListModel := list.NewModel(stackList, list.NewDefaultDelegate(), 0, 0)
 	stackListModel.Title = "Cloudformation Stacks"
 	stackListModel.Styles.Title = titleStyle
