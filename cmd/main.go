@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	cf "github.com/hown3d/cloudformation-tui/pkg/cloudformation"
 	"github.com/hown3d/cloudformation-tui/pkg/tui"
 )
 
@@ -21,7 +22,8 @@ func main() {
 		log.Fatal("Endpoint URL is malformed!")
 	}
 
-	p := tea.NewProgram(tui.InitialModel(endpointURL))
+	client := cf.NewClient(endpointURL)
+	p := tea.NewProgram(tui.InitialModel(client))
 	if err := p.Start(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)

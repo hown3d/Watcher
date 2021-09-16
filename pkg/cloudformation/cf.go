@@ -7,14 +7,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
+	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 )
-
-// Stack has a name, which resembles the cloudformation stack name and its status
-type Stack struct {
-	status       string
-	statusReason string
-	name         string
-}
 
 // NewClient returns a cloudformation Client, if url is not empty, a custom endpoint can be specified
 func NewClient(url string) *cloudformation.Client {
@@ -45,15 +39,11 @@ func getCustomEndpointResolver(url string, region string) aws.EndpointResolverFu
 }
 
 //GetStacks fetches all Cloudformation stacks from a client and returns them as a list
-func GetStacks(client *cloudformation.Client) ([]Stack, error) {
-	var stacks []Stack
+func GetStacks(client *cloudformation.Client) ([]types.Stack, error) {
 
 	output, err := client.DescribeStacks(context.TODO(), &cloudformation.DescribeStacksInput{})
 	if err != nil {
 		return nil, err
 	}
-	for _, stack := range output.Stacks {
-		stacks = append(stacks, Stack{name: *stack.StackName, statusReason: *stack.StackStatusReason, status: string(stack.StackStatus)})
-	}
-	return stacks, nil
+	return output.Stacks, nil
 }
