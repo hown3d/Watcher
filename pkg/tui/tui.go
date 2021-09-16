@@ -28,21 +28,20 @@ var (
 				Render
 )
 
-// Stack has a name, which resembles the cloudformation stack name and its status
-type Stack struct {
+type stack struct {
 	status       string
 	statusReason string
 	name         string
 }
 
 // Title to Match bubbles list item interface
-func (s Stack) Title() string { return s.name }
+func (s stack) Title() string { return s.name }
 
 // Description to Match bubbles list item interface
-func (s Stack) Description() string { return fmt.Sprintf("%v : %v", s.status, s.statusReason) }
+func (s stack) Description() string { return fmt.Sprintf("%v : %v", s.status, s.statusReason) }
 
 // FilterValue to Match bubbles list item interface
-func (s Stack) FilterValue() string { return s.name }
+func (s stack) FilterValue() string { return s.name }
 
 type model struct {
 	stackList list.Model
@@ -79,8 +78,8 @@ func getStackItemList(cfClient *cloudformation.Client) ([]list.Item, error) {
 	}
 
 	var stackList []list.Item
-	for _, stack := range stacks {
-		item := Stack{status: string(stack.StackStatus), statusReason: *stack.StackStatusReason, name: *stack.StackName}
+	for _, s := range stacks {
+		item := stack{status: string(s.StackStatus), statusReason: *s.StackStatusReason, name: *s.StackName}
 		stackList = append(stackList, item)
 	}
 	return stackList, nil
