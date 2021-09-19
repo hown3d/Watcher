@@ -14,7 +14,7 @@ type stackModel struct {
 type eventModel struct {
 	list  list.Model
 	keys  *listKeyMap
-	stack string 
+	stack stack 
 }
 type stack struct {
 	status       string

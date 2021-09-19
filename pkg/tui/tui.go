@@ -51,7 +51,7 @@ func InitialModel(cfClient *cloudformation.Client) model {
 		// of the `choices` slice, above.
 		cfClient:    cfClient,
 		stackModel:  newStackModel(cfClient, listKeys),
-		eventModel:  nil,
+		eventModel:  newEventModel(listKeys),
 		isEventView: false,
 	}
 }
@@ -68,10 +68,6 @@ func (m model) Init() tea.Cmd {
 
 func (m model) View() string {
 	if m.isEventView {
-		if m.eventModel == nil {
-			newEventModel, _ := newEventModel(m, listKeys)
-			m.eventModel = newEventModel
-		}
 		return m.eventsView()
 	}
 	return m.stacksView()
@@ -79,15 +75,15 @@ func (m model) View() string {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmds []tea.Cmd
-	if m.isEventView {
-		if m.eventModel == nil {
-			newEventModel, updateCmd := newEventModel(m, listKeys)
-			m.eventModel = newEventModel
-			cmds = append(cmds, updateCmd)
-		}
-		return eventsUpdate(msg, m)
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		topGap, rightGap, bottomGap, leftGap := appStyle.GetPadding()
+		m.stackModel.list.SetSize(msg.Width-leftGap-rightGap, msg.Height-topGap-bottomGap)
+		m.eventModel.list.SetSize(msg.Width-leftGap-rightGap, msg.Height-topGap-bottomGap)
 	}
 
+	if m.isEventView {
+		return eventsUpdate(msg, m)
+	}
 	return stacksUpdate(msg, m)
 }

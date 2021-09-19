@@ -30,8 +30,8 @@ func newStackModel(cfClient *cloudformation.Client, keys *listKeyMap) *stackMode
 		}
 	}
 	return &stackModel{
-		list:  stackListModel,
-		keys:  keys,
+		list: stackListModel,
+		keys: keys,
 	}
 }
 
@@ -45,7 +45,6 @@ func (m model) fetchStacksFromAWS() tea.Cmd {
 		return stackMsg{stacks}
 	})
 }
-
 
 //converts types.Stacks to list Items
 func getStackItemList(cfClient *cloudformation.Client) ([]list.Item, error) {
@@ -67,10 +66,6 @@ func stacksUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		topGap, rightGap, bottomGap, leftGap := appStyle.GetPadding()
-		m.stackModel.list.SetSize(msg.Width-leftGap-rightGap, msg.Height-topGap-bottomGap)
-
 	case tea.KeyMsg:
 		// Don't match any of the keys below if we're actively filtering.
 		if m.stackModel.list.FilterState() == list.Filtering {
@@ -89,7 +84,7 @@ func stacksUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.stackModel.keys.enterStack):
 			m.isEventView = true
-			return m, nil
+			return m, m.eventInit() 
 		}
 	case stackMsg:
 		// This will also call our delegate's update function.
