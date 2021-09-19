@@ -47,3 +47,30 @@ func GetStacks(client *cloudformation.Client) ([]types.Stack, error) {
 	}
 	return output.Stacks, nil
 }
+
+// GetStackInfo retrieves Information about a stack by its name
+func GetStackInfo(stackname string, client *cloudformation.Client) ([]types.Stack, error) {
+	output, err := client.DescribeStacks(context.TODO(), &cloudformation.DescribeStacksInput{StackName: &stackname})
+	if err != nil {
+		return nil, err
+	}
+	return output.Stacks, nil
+}
+
+//GetStackEvents fetches events of a stack by its name
+func GetStackEvents(stack string, client *cloudformation.Client) ([]types.StackEvent, error) {
+	output, err := client.DescribeStackEvents(context.TODO(), &cloudformation.DescribeStackEventsInput{StackName: &stack})
+	if err != nil {
+		return nil, err
+	}
+	return output.StackEvents, nil
+}
+
+//GetStackResources returns all resources associated by a stack
+func GetStackResources(stack string, client *cloudformation.Client) ([]types.StackResource, error) {
+	output, err := client.DescribeStackResources(context.TODO(), &cloudformation.DescribeStackResourcesInput{StackName: &stack})
+	if err != nil {
+		return nil, err
+	}
+	return output.StackResources, nil
+}
