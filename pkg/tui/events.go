@@ -24,6 +24,10 @@ func newEventModel(keys *listKeyMap) *eventModel {
 // returns a tick, that uses getStackItemList to fetch cloudformation stacks continously
 func (m model) fetchEventsFromAWS() tea.Cmd {
 	return tea.Tick(time.Second*time.Duration(1), func(t time.Time) tea.Msg {
+		// return nil if stack isn't set
+		if m.eventModel.stack == nil {
+			return nil
+		}
 		stacks, err := m.getEventItemList()
 		if err != nil {
 			return errMsg{err}
@@ -50,7 +54,7 @@ func (m model) getEventItemList() ([]list.Item, error) {
 func (m model) eventInit() tea.Cmd {
 	return func() tea.Msg {
 		selectedStack := m.stackModel.list.SelectedItem().(stack)
-		m.eventModel.stack = selectedStack
+		m.eventModel.stack = &selectedStack
 		m.eventModel.list.Title = fmt.Sprintf("%v's Events", selectedStack.name)
 		eventItems, err := m.getEventItemList()
 		if err != nil {
@@ -73,6 +77,7 @@ func eventsUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		case "backspace":
 			// dont return to stackView if user is actively typing a filter
 			if m.eventModel.list.FilterState() != list.Filtering {
+				m.eventModel.stack = nil
 				m.isEventView = false
 				return m, nil
 			}
