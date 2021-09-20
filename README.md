@@ -12,4 +12,14 @@ $ chmod +x watcher
 $ mv watcher /usr/local/bin
 ```
 
+## Configuration
+Watcher uses your current AWS profile, set by the environment variable **AWS_PROFILE**
+```
+$ watcher --help                 
+Usage of watcher:
+  -endpoint string
+    	specify a custom endpoint for aws, for example localstack
+```
+
+
 ## TODO: Add Demo Gif
