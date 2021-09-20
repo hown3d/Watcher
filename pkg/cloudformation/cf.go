@@ -15,9 +15,10 @@ func NewClient(url string) *cloudformation.Client {
 	// Load the Shared AWS Configuration (~/.aws/config)
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Couldn't load aws config from file: %v", err)
 	}
 	if url != "" {
+		log.Printf("Using custom resolver with url: %v", url)
 		cfg.EndpointResolver = getCustomEndpointResolver(url, cfg.Region)
 	}
 	// Create an Amazon CF service client

@@ -19,7 +19,7 @@ func main() {
 	flag.Parse()
 
 	if !(strings.HasPrefix(endpointURL, "http://") || strings.HasPrefix(endpointURL, "https://")) && endpointURL != "" {
-		log.Fatal("Endpoint URL is malformed!")
+		log.Fatal("Endpoint URL is malformed, needs to begin with either http:// or https://")
 	}
 
 	client := cf.NewClient(endpointURL)

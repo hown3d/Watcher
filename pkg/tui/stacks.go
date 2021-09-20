@@ -13,7 +13,7 @@ import (
 )
 
 //newStackModel returns a new viewModel associate with cloudformation stacks
-func newStackModel(cfClient *cloudformation.Client, keys *listKeyMap) *stackModel {
+func newStackModel(cfClient *cloudformation.Client, keys *listKeyMap) stackModel {
 	stackList, err := getStackItemList(cfClient)
 	if err != nil {
 		log.Fatalf("Can't create stack list, %v", err)
@@ -29,7 +29,7 @@ func newStackModel(cfClient *cloudformation.Client, keys *listKeyMap) *stackMode
 			keys.enterStack,
 		}
 	}
-	return &stackModel{
+	return stackModel{
 		list: stackListModel,
 		keys: keys,
 	}
@@ -55,14 +55,20 @@ func getStackItemList(cfClient *cloudformation.Client) ([]list.Item, error) {
 
 	var stackList []list.Item
 	for _, s := range stacks {
-		item := stack{status: string(s.StackStatus), statusReason: *s.StackStatusReason, name: *s.StackName}
-		stackList = append(stackList, item)
+		var stackItem stack
+		if s.StackStatusReason != nil {
+			stackItem.statusReason = *s.StackStatusReason
+		}
+		stackItem.name = *s.StackName
+		stackItem.status = string(s.StackStatus)
+
+		stackList = append(stackList, stackItem)
 	}
 	return stackList, nil
 }
 
 //bubbletea update loop func
-func stacksUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
+func stacksUpdate(msg tea.Msg, m *model) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
@@ -84,7 +90,7 @@ func stacksUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.stackModel.keys.enterStack):
 			m.isEventView = true
-			return m, m.eventInit() 
+			return m, m.eventInit()
 		}
 	case stackMsg:
 		// This will also call our delegate's update function.
@@ -97,7 +103,7 @@ func stacksUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	}
 	updatedList, cmd := m.stackModel.list.Update(msg)
 	m.stackModel.list = updatedList
-	cmds = append(cmds, m.fetchStacksFromAWS(), cmd)
+	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
 

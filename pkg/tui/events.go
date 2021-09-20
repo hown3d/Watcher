@@ -11,20 +11,25 @@ import (
 )
 
 // NewEventModel returns a new viewModel for cloudformation events
-func newEventModel(keys *listKeyMap) *eventModel {
+func newEventModel(keys *listKeyMap) eventModel {
 	// get the name of the stack which was selected
 	eventListModel := list.NewModel([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	eventListModel.Styles.Title = titleStyle
-	return &eventModel{
-		list: eventListModel,
-		keys: keys,
+	eventListModel.Title = "Events"
+	return eventModel{
+		list:  eventListModel,
+		keys:  keys,
+		ready: false,
 	}
 }
 
 // returns a tick, that uses getStackItemList to fetch cloudformation stacks continously
-func (m model) fetchEventsFromAWS() tea.Cmd {
+func (m *model) fetchEventsFromAWS() tea.Cmd {
 	return tea.Tick(time.Second*time.Duration(1), func(t time.Time) tea.Msg {
 		// return nil if stack isn't set
+		if !m.eventModel.ready {
+			return notReadyMsg("event Model is not ready yet")
+		}
 		if m.eventModel.stack == nil {
 			return nil
 		}
@@ -45,16 +50,21 @@ func (m model) getEventItemList() ([]list.Item, error) {
 
 	var eventItems []list.Item
 	for _, e := range events {
-		item := event{status: string(e.ResourceStatus), resourceType: *e.ResourceType, resource: *e.ResourceType}
+		item := event{
+			status:       string(e.ResourceStatus),
+			resourceType: *e.ResourceType,
+			resource:     *e.LogicalResourceId,
+		}
 		eventItems = append(eventItems, item)
 	}
 	return eventItems, nil
 }
 
-func (m model) eventInit() tea.Cmd {
+func (m *model) eventInit() tea.Cmd {
 	return func() tea.Msg {
 		selectedStack := m.stackModel.list.SelectedItem().(stack)
 		m.eventModel.stack = &selectedStack
+		m.eventModel.ready = true
 		m.eventModel.list.Title = fmt.Sprintf("%v's Events", selectedStack.name)
 		eventItems, err := m.getEventItemList()
 		if err != nil {
@@ -68,7 +78,7 @@ func (m model) eventsView() string {
 	return appStyle.Render(m.eventModel.list.View())
 }
 
-func eventsUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
+func eventsUpdate(msg tea.Msg, m *model) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
@@ -87,10 +97,11 @@ func eventsUpdate(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd, m.fetchEventsFromAWS())
 	case errMsg:
 		log.Printf("error accured: %v", msg.err)
+	case notReadyMsg:
+		cmds = append(cmds, m.eventModel.list.NewStatusMessage(msg.String()))
 	}
 	updatedList, cmd := m.eventModel.list.Update(msg)
-
-	cmds = append(cmds, cmd)
 	m.eventModel.list = updatedList
+	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }

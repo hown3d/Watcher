@@ -8,13 +8,14 @@ import (
 )
 
 type stackModel struct {
-	list  list.Model
-	keys  *listKeyMap
+	list list.Model
+	keys *listKeyMap
 }
 type eventModel struct {
 	list  list.Model
 	keys  *listKeyMap
-	stack *stack 
+	stack *stack
+	ready bool
 }
 type stack struct {
 	status       string
@@ -42,7 +43,7 @@ type event struct {
 func (e event) Title() string { return e.resource }
 
 // Description to Match bubbles list item interface
-func (e event) Description() string { return fmt.Sprintf("%v : %v", e.status, e.statusReason) }
+func (e event) Description() string { return fmt.Sprintf("%v : %v", e.resourceType, e.status) }
 
 // FilterValue to Match bubbles list item interface
 func (e event) FilterValue() string { return e.resourceType }
@@ -55,6 +56,12 @@ type stackMsg struct {
 
 type eventMsg struct {
 	events []list.Item
+}
+
+type notReadyMsg string 
+
+func (msg notReadyMsg) String() string {
+	return string(msg)
 }
 
 type listKeyMap struct {

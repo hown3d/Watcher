@@ -19,8 +19,8 @@ var (
 )
 
 type model struct {
-	stackModel  *stackModel
-	eventModel  *eventModel
+	stackModel  stackModel
+	eventModel  eventModel
 	isEventView bool
 	cfClient    *cloudformation.Client
 }
@@ -83,7 +83,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if m.isEventView {
-		return eventsUpdate(msg, m)
+		return eventsUpdate(msg, &m)
 	}
-	return stacksUpdate(msg, m)
+	return stacksUpdate(msg, &m)
 }
